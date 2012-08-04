@@ -33,25 +33,27 @@
     </f:entry>
     
     <f:entry title="${%Name of input data file (INFILE)}" help="${rootURL}/../plugin/structure/help-inFile.html">
-        <f:textbox name="inFile" value="${instance.inFile}" checkUrl="'${rootURL}/builder/StructureBuilder/doRequired?value='+escape(this.value)" />
+        <f:textbox name="inFile" value="${instance.inFile}" checkUrl="'${rootURL}/builder/StructureBuilder/required?value='+escape(this.value)" />
     </f:entry>
     
     <f:entry title="${%Name of output data file (OUTFILE)}" help="${rootURL}/../plugin/structure/help-outFile.html">
-        <f:textbox name="outFile" value="${instance.outFile}" checkUrl="'${rootURL}/builder/StructureBuilder/doRequired?value='+escape(this.value)" />
+        <f:textbox name="outFile" value="${instance.outFile}" checkUrl="'${rootURL}/builder/StructureBuilder/required?value='+escape(this.value)" />
     </f:entry>
     
     <f:entry title="${%Main parameters (mainparams)}" help="${rootURL}/../plugin/structure/help-mainParams.html">
-        <f:textarea name="mainParams" value="${instance.mainParams}" checkUrl="'${rootURL}/builder/StructureBuilder/doRequired?value='+escape(this.value)" />
+        <f:textarea name="mainParams" value="${instance.mainParams}" checkUrl="'${rootURL}/builder/StructureBuilder/required?value='+escape(this.value)" />
     </f:entry>
     
     <f:entry title="${%Extra parameters (extraparams)}" help="${rootURL}/../plugin/structure/help-extraParams.html">
-        <f:textarea name="extraParams" value="${instance.extraParams}" checkUrl="'${rootURL}/builder/StructureBuilder/doRequired?value='+escape(this.value)" />
+        <f:textarea name="extraParams" value="${instance.extraParams}" checkUrl="'${rootURL}/builder/StructureBuilder/required?value='+escape(this.value)" />
     </f:entry>
     
     <f:block>Jenkins slaves options</f:block>
     
-    <f:entry title="${%Assigned Label}" help="${rootURL}/../plugin/structure/help-outFile.html">
-        <f:textbox name="outFile" value="${instance.outFile}" checkUrl="'${rootURL}/builder/StructureBuilder/doRequired?value='+escape(this.value)" />
-    </f:entry>
+    <f:advanced>
+        <f:entry title="${%Assigned Label}" help="${rootURL}/../plugin/structure/help-label.html">
+            <f:textbox name="label" value="${instance.label}" />
+        </f:entry>
+    </f:advanced>
 	
 </j:jelly>

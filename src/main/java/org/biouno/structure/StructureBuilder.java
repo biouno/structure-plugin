@@ -2,6 +2,7 @@ package org.biouno.structure;
 
 import hudson.AbortException;
 import hudson.Extension;
+import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.BuildListener;
 import hudson.model.AbstractBuild;
@@ -10,7 +11,6 @@ import hudson.model.FreeStyleProject;
 import hudson.model.Hudson;
 import hudson.model.labels.LabelAtom;
 import hudson.tasks.Builder;
-import hudson.tasks.Shell;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,6 +20,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
 import org.biouno.structure.parser.MainParamsParser;
 import org.biouno.structure.parser.ParserException;
 import org.biouno.structure.util.Messages;
@@ -213,16 +214,21 @@ public class StructureBuilder extends Builder {
 
 		final List<Future<?>> futures = new ArrayList<Future<?>>();
 
+		FilePath workspace = build.getWorkspace();
+		
 		// Replace variables with the values provided by the user in the job
 		// configuration
 		// Create one mainparam file for each K value
-		for (int i = 1; 1 <= this.maxPops; ++i) {
+		for (int i = 1; i <= this.maxPops; ++i) {
+			listener.getLogger().println("Generating mainparams for " + i + " K");
 			try {
 				String mainParamContent = parser.parse(this.mainParams, i);
-				FileUtils.writeStringToFile(new File("mainparams.param_set.k"
-						+ i), mainParamContent);
+				File mainparams = new File(workspace.getRemote(), "mainparams.param_set.k" + i);
+				FileUtils.writeStringToFile(mainparams, mainParamContent);
+				File extraparams = new File(workspace.getRemote(), "extraparams");
+				FileUtils.writeStringToFile(extraparams, this.extraParams);
 
-				// Spawn one job for each K/mainparam
+				// Create one job for each K/mainparam
 				String jobName = "" + build.getProject().getName()
 						+ Integer.toString(i);
 				AbstractProject<?, ?> existingProject = null;
@@ -235,13 +241,21 @@ public class StructureBuilder extends Builder {
 				}
 				AbstractProject<?, ?> project = null;
 				if (existingProject != null) {
-					project = existingProject;
-				} else {
-					project = Hudson.getInstance().createProject(
-							FreeStyleProject.class, jobName);
+					existingProject.delete();
+				} 
+				project = Hudson.getInstance().createProject(FreeStyleProject.class, jobName);
+				
+				// Include structure builder (this one executes the tool)
+				StructurePopulationBuilder leBuilder = new StructurePopulationBuilder(
+						build.getProject().getName(), 
+						structureInstallation, maxPops, numLoci, numInds,
+						inFile, outFile, mainparams.getName(), extraparams.getName());
+				((FreeStyleProject)project).getBuildersList().add(leBuilder); 
+				
+				// Set the label for the slave
+				if(StringUtils.isNotBlank(this.label)) {
+					((FreeStyleProject)project).setAssignedLabel(new LabelAtom(this.label));
 				}
-				((FreeStyleProject)project).getBuilders().add(new Shell("echo \"Bruno\"")); // TODO: call structure
-				((FreeStyleProject)project).setAssignedLabel(new LabelAtom(this.label));
 				Future<?> future = project.scheduleBuild2(0);
 				futures.add(future);
 			} catch (ParserException e) {
@@ -264,39 +278,6 @@ public class StructureBuilder extends Builder {
 
 		// TODO: Reporting
 
-		// // create command to be executed
-		// listener.getLogger().println("Launching Structure...");
-		//
-		// final String command = structureInstallation.getPathToExecutable();
-		// final ArgumentListBuilder args = new ArgumentListBuilder();
-		// args.add(command);
-		//
-		// final String mainParamsLocation = fileNames.get("mainparams");
-		// final String extraParamsLocation = fileNames.get("extraparams");
-		//
-		// if(StringUtils.isNotBlank(mainParamsLocation)) {
-		// args.add("-m");
-		// args.add(mainParamsLocation);
-		// }
-		//
-		// if(StringUtils.isNotBlank(extraParamsLocation)) {
-		// args.add("-e");
-		// args.add(extraParamsLocation);
-		// }
-		//
-		// Map<String, String> env = build.getEnvironment(listener);
-		//
-		// final Integer exitCode =
-		// launcher.launch().cmds(args).envs(env).stdout(listener).pwd(build.getModuleRoot()).join();
-		//
-		// if(exitCode != 0) {
-		// listener.getLogger().println("Error executing Structure. Exit code : "
-		// + exitCode);
-		// return Boolean.FALSE;
-		// } else {
-		// listener.getLogger().println("Successfully executed Structure.");
-		// return Boolean.TRUE;
-		// }
 		return true;
 	}
 
