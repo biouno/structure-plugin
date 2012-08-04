@@ -1,0 +1,61 @@
+// PROGRAM OPTIONS
+private final Boolean noAdmix; // (B) Use no admixture model (0=admixture model, 1=no-admix)
+private final Boolean linkage; // (B) Use the linkage model model 
+private final Boolean usePopInfo; // (B) Use prior population information to pre-assign individuals to clusters
+private final Boolean locPrior; //(B)  Use location information to improve weak data
+private final Boolean freqsCorr; // (B) allele frequencies are correlated among pops
+private final Boolean oneFst; // (B) assume same value of Fst for all subpopulations.
+private final Boolean inferAlpha; // (B) Infer ALPHA (the admixture parameter)
+private final Boolean popAlphas; // (B) Individual alpha for each population
+private final Double alpha; // (d) Dirichlet parameter for degree of admixture (this is the initial value if INFERALPHA==1).
+private final Boolean inferLambda; // (B) Infer LAMBDA (the allele frequencies parameter)
+private final Boolean popSpecificLambda; //(B) infer a separate lambda for each pop (only if INFERLAMBDA=1).
+private final Double lambda; // (d) Dirichlet parameter for allele frequencies 
+
+// PRIORS
+private final Double fPriorMean; // (d) Prior mean and SD of Fst for pops.
+private final Double fPriorSd; // (d) The prior is a Gamma distribution with these parameters
+private final Boolean unifPriorAlpha; // (B) use a uniform prior for alpha; otherwise gamma prior
+private final Double alphaMax; // (d) max value of alpha if uniform prior
+private final Double alphaPriorA; // (only if UNIFPRIORALPHA==0): alpha has a gamma prior with mean A*B, and 
+private final Double alphaPriorB; // variance A*B^2. 
+private final Double log10RMin; //(d) Log10 of minimum allowed value of r under linkage model
+private final Double log10RMax; //(d) Log10 of maximum allowed value of r
+private final Double log10RPropSD; //(d) standard deviation of log r in update
+private final Double log10RStart; //(d) initial value of log10 r
+
+// USING PRIOR POPULATION INFO (USEPOPINFO)
+private final Long gensBank; //(int) For use when inferring whether an individual is an immigrant, or has an immigrant ancestor in the past GENSBACK generations.  eg, if GENSBACK==2, it tests for immigrant ancestry back to grandparents. 
+private final Double migrPrior; //(d) prior prob that an individual is a migrant (used only when USEPOPINFO==1).  This should be small, eg 0.01 or 0.1.
+private final Boolean pFromPopFlagOnly; // (B) only use individuals with POPFLAG=1 to update P. This is to enable use of a reference set of individuals for clustering additional "test" individuals.
+
+// LOCPRIOR MODEL FOR USING LOCATION INFORMATION
+private final Boolean locisPop; //(B) use POPDATA for location information 
+private final Double locPriorInit; //(d) initial value for r, the location prior
+private final Double maxLocPrior; //(d) max allowed value for r
+
+// OUTPUT OPTIONS
+private final Boolean printNet; // (B) Print the "net nucleotide distance" to screen during the run
+private final Boolean printLambda; // (B) Print current value(s) of lambda to screen
+private final Boolean printQSum; // (B) Print summary of current population membership to screen
+private final Boolean siteByte; // (B) whether or not to print site by site results. (Linkage model only) This is a large file!
+private final Boolean printQHat; // (B) Q-hat printed to a separate file.  Turn this on before using STRAT.
+private final Long updateFreq; // (int) frequency of printing update on the screen. Set automatically if this is 0.
+private final Boolean printLikes; // (B) print current likelihood to screen every rep
+private final Long intermedSave; // (int) number of saves to file during run
+private final Boolean echoData; // (B) Print some of data file to screen to check that the data entry is correct.
+
+// (NEXT 3 ARE FOR COLLECTING DISTRIBUTION OF Q:)
+private final Boolean ancestDist; // (B) collect data about the distribution of ancestry coefficients (Q) for each individual
+private final Long numBoxes; // (int) the distribution of Q values is stored as a histogram with this number of boxes. 
+private final Double ancestPint; // (d) the size of the displayed probability interval on Q (values between 0.0--1.0)
+
+// MISCELLANEOUS
+private final Boolean computerProb; // (B) Estimate the probability of the Data under the model.  This is used when choosing the best number of subpopulations.
+private final Long admBurnIn; // (int) [only relevant for linkage model]: Initial period of burnin with admixture model (see Readme)
+private final Double alphaPropSd; // (d) SD of proposal for updating alpha
+private final Boolean startAtPopInfo; // Use given populations as the initial condition for population origins. (Need POPDATA==1). It is assumed that the PopData in the input file are between 1 and k where k<=MAXPOPS.
+private final Boolean randomize; // (B) use new random seed for each run 
+private final Long seed; // (int) seed value for random number generator (must set RANDOMIZE=0) 
+private final Long metroFreq; // (int) Frequency of using Metropolis step to update Q under admixture model (ie use the metr. move every i steps).  If this is set to 0, it is never used. (Proposal for each q^(i) sampled from prior.  The goal is to improve mixing for small alpha.)
+private final Boolean reportHitRate; // (B) report hit rate if using METROFREQ

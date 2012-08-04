@@ -1,0 +1,57 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define"
+	xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+
+	<f:entry title="${%Structure installation}">
+		<select class="setting-input" name="Structure.structureInstallationName">
+			<option>(Default)</option>
+			<j:forEach var="inst" items="${descriptor.installations}">
+				<f:option selected="${inst.name==instance.structureInstallationName}">${inst.name}</f:option>
+			</j:forEach>
+		</select>
+	</f:entry>
+	
+	<f:block>Structure parameters</f:block>
+	
+	<f:entry title="${%Number of populations assumed (MAXPOPS)}" help="${rootURL}/../plugin/structure/help-maxPops.html">
+        <f:textbox name="maxPops" value="${instance.maxPops}" checkUrl="'${rootURL}/builder/StructureBuilder/longRequired?value='+escape(this.value)" />
+    </f:entry>
+    
+    <f:entry title="${%Number of loci in data file (NUMLOCI)}" help="${rootURL}/../plugin/structure/help-numLoci.html">
+        <f:textbox name="numLoci" value="${instance.numLoci}" checkUrl="'${rootURL}/builder/StructureBuilder/longRequired?value='+escape(this.value)" />
+    </f:entry>
+    
+    <f:entry title="${%Number of diploid individuals in data file (NUMINDS)}" help="${rootURL}/../plugin/structure/help-numInds.html">
+        <f:textbox name="numInds" value="${instance.numInds}" checkUrl="'${rootURL}/builder/StructureBuilder/longRequired?value='+escape(this.value)" />
+    </f:entry>
+    
+    <f:entry title="${%Length of burn-in period (BURNIN)}" help="${rootURL}/../plugin/structure/help-burnIn.html">
+        <f:textbox name="burnIn" value="${instance.burnIn}" checkUrl="'${rootURL}/builder/StructureBuilder/longRequired?value='+escape(this.value)" />
+    </f:entry>
+    
+    <f:entry title="${%Number of MCMC steps after burn-in (NUMREPS)}" help="${rootURL}/../plugin/structure/help-numReps.html">
+        <f:textbox name="numReps" value="${instance.numReps}" checkUrl="'${rootURL}/builder/StructureBuilder/longRequired?value='+escape(this.value)" />
+    </f:entry>
+    
+    <f:entry title="${%Name of input data file (INFILE)}" help="${rootURL}/../plugin/structure/help-inFile.html">
+        <f:textbox name="inFile" value="${instance.inFile}" checkUrl="'${rootURL}/builder/StructureBuilder/doRequired?value='+escape(this.value)" />
+    </f:entry>
+    
+    <f:entry title="${%Name of output data file (OUTFILE)}" help="${rootURL}/../plugin/structure/help-outFile.html">
+        <f:textbox name="outFile" value="${instance.outFile}" checkUrl="'${rootURL}/builder/StructureBuilder/doRequired?value='+escape(this.value)" />
+    </f:entry>
+    
+    <f:entry title="${%Main parameters (mainparams)}" help="${rootURL}/../plugin/structure/help-mainParams.html">
+        <f:textarea name="mainParams" value="${instance.mainParams}" checkUrl="'${rootURL}/builder/StructureBuilder/doRequired?value='+escape(this.value)" />
+    </f:entry>
+    
+    <f:entry title="${%Extra parameters (extraparams)}" help="${rootURL}/../plugin/structure/help-extraParams.html">
+        <f:textarea name="extraParams" value="${instance.extraParams}" checkUrl="'${rootURL}/builder/StructureBuilder/doRequired?value='+escape(this.value)" />
+    </f:entry>
+    
+    <f:block>Jenkins slaves options</f:block>
+    
+    <f:entry title="${%Assigned Label}" help="${rootURL}/../plugin/structure/help-outFile.html">
+        <f:textbox name="outFile" value="${instance.outFile}" checkUrl="'${rootURL}/builder/StructureBuilder/doRequired?value='+escape(this.value)" />
+    </f:entry>
+	
+</j:jelly>
