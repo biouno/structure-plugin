@@ -23,30 +23,34 @@
  */
 package org.biouno.structure;
 
-import hudson.Extension;
+import hudson.AbortException;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.BuildListener;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+import hudson.model.Computer;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
+import hudson.slaves.SlaveComputer;
 import hudson.tasks.Builder;
 import hudson.util.ArgumentListBuilder;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
-import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
  * A Builder that executes structure for one population.
  * @author Bruno P. Kinoshita - http://www.kinoshita.eti.br
+ * @see StructureBuilder
  * @since 0.1
  */
 public class StructurePopulationBuilder extends Builder {
+	/**
+	 * Name of structure project.
+	 */
 	private final String structureProject;
 	/**
 	 * Structure installation.
@@ -80,20 +84,18 @@ public class StructurePopulationBuilder extends Builder {
 	 * Extra parameters (extraparams).
 	 */
 	private final String extraParams;
-
 	/**
+	 * Constructor with args, called from Jelly.
+	 * @param structureProject
 	 * @param structure
 	 * @param maxPops
 	 * @param numLoci
 	 * @param numInds
-	 * @param burnIn
-	 * @param numReps
 	 * @param inFile
 	 * @param outFile
 	 * @param mainParams
 	 * @param extraParams
 	 */
-	@DataBoundConstructor
 	public StructurePopulationBuilder(String structureProject, StructureInstallation structure,
 			Integer maxPops, Integer numLoci, Integer numInds, String inFile, 
 			String outFile, String mainParams, String extraParams) {
@@ -108,49 +110,112 @@ public class StructurePopulationBuilder extends Builder {
 		this.mainParams = mainParams;
 		this.extraParams = extraParams;
 	}
-
-	/*
-	 * (non-Javadoc)
+	/**
+	 * Calls structure for a certain K. It copies the input files needed from 
+	 * the project that triggered the build (with the StructureBuilder) and 
+	 * prepares a call to structure tool. Finally, it copies back the output 
+	 * file back to the project that triggered the build.
 	 * 
-	 * @see
-	 * hudson.tasks.BuildStepCompatibilityLayer#perform(hudson.model.AbstractBuild
-	 * , hudson.Launcher, hudson.model.BuildListener)
+	 * {@inheritDoc}
 	 */
 	@Override
 	public boolean perform(AbstractBuild<?, ?> build, Launcher launcher,
 			BuildListener listener) throws InterruptedException, IOException {
-		// create command to be executed
-		listener.getLogger().println("Launching Structure...");
+		listener.getLogger().println("Launching structure for K " + this.maxPops);
 
-		FilePath workspace = build.getWorkspace();
-		
+		// prepare workspace
+		final FilePath workspace = build.getWorkspace();
+		listener.getLogger().println("Using workspace " + workspace.getRemote());
+		if(Computer.currentComputer() instanceof SlaveComputer) {
+			listener.getLogger().println("Running on slave " + Computer.currentComputer().getName());
+		} else {
+			listener.getLogger().println("Running on master");
+		}
 		if(!workspace.exists()) {
+			listener.getLogger().println("Creating workspace at " + workspace.getRemote());
 			workspace.mkdirs();
+			if(!workspace.exists()) {
+				throw new AbortException("Couldn't create workspace");
+			}
 		}
 		
+		// Prepare the project with structure files
 		AbstractProject<?, ?> project = (AbstractProject<?, ?>) Hudson.getInstance().getItem(structureProject);
+		if(project == null) {
+			listener.getLogger().println("Non existing structure project, using this build's project as structure project");
+			project = build.getProject(); // Use this project if no other was provided
+		}
+		//final FilePath structureWorkspace = new FilePath(new File(project.getRootDir(), "workspace"));
+		if(!project.getLastBuild().isBuilding()) {
+			throw new AbortException("Structure project is not building");
+		}
+		final FilePath structureWorkspace = project.getLastBuild().getWorkspace();
 		
-		FilePath structureWorkspace = new FilePath(new File(project.getRootDir(), "workspace"));
+		// Copy structure files from other project to this project's workspace 
+		// handling with care in case of a distributed env.
+		listener.getLogger().println("Copying structure files from " + structureWorkspace.getRemote());
+		this.copyStructureFiles(workspace, structureWorkspace);
+		
+		// Prepare the command line arguments, and then execute it!
+		final ArgumentListBuilder args = this.createStructureArgs(workspace); 
+		Map<String, String> env = build.getEnvironment(listener);
+		final Integer exitCode = launcher.launch().cmds(args).envs(env)
+				.stdout(listener).pwd(build.getModuleRoot()).join();
+		listener.getLogger().println("Preparing to execute structure. Command line args: " + args.toStringWithQuote());
+
+		if (exitCode != 0) {
+			listener.getLogger().println(
+					"Error executing Structure. Exit code : " + exitCode);
+			return Boolean.FALSE;
+		} else {
+			// If the command was executed with success, send the outfile back to the master
+			FilePath outFileFilePath = new FilePath(workspace, outFile+"_f");
+			if(outFileFilePath.exists()) {
+				FilePath structureOutputFilePath = new FilePath(structureWorkspace, "structure_run_output");
+				if(!structureOutputFilePath.exists()) {
+					structureOutputFilePath.mkdirs();
+				}
+				outFileFilePath.copyTo(new FilePath(structureOutputFilePath, outFile+"_run_"+this.maxPops+"_f"));
+			}
+			
+			listener.getLogger().println("Successfully executed Structure.");
+			return Boolean.TRUE;
+		}
+	}
+	/**
+	 * Copies structure files.
+	 * @param workspace
+	 * @param structureWorkspace
+	 * @throws IOException
+	 * @throws InterruptedException
+	 */
+	private void copyStructureFiles(FilePath workspace, FilePath structureWorkspace) throws IOException, InterruptedException {
+		// Copying mainparams
 		FilePath mainParamsFilePath = new FilePath(structureWorkspace, mainParams);
-		FilePath extraParamsFilePath = new FilePath(structureWorkspace, extraParams);
-		FilePath inputFilePath = new FilePath(structureWorkspace, inFile);
-		
 		FilePath localMainParamsFilePath = workspace.child(mainParams);
 		mainParamsFilePath.copyTo(localMainParamsFilePath);
 		
+		// Copying extraparams
+		FilePath extraParamsFilePath = new FilePath(structureWorkspace, extraParams);
 		FilePath localExtraParamsFilePath = workspace.child(extraParams);
 		extraParamsFilePath.copyTo(localExtraParamsFilePath);
 		
+		// Copying structure input data file
+		FilePath inputFilePath = new FilePath(structureWorkspace, inFile);
 		FilePath localInputFilePath = new FilePath(workspace, inFile);
 		if(!localInputFilePath.getParent().equals(workspace)) {
 			localInputFilePath.getParent().mkdirs();
 		}
 		inputFilePath.copyTo(localInputFilePath);
-		
-		final String command = structure.getPathToExecutable();
-		final ArgumentListBuilder args = new ArgumentListBuilder();
-		args.add(command);
-
+	}
+	/**
+	 * Creates structure args.
+	 * @param workspace 
+	 * @return ArgumentListBuilder
+	 */
+	private ArgumentListBuilder createStructureArgs(FilePath workspace) {
+		ArgumentListBuilder args = new ArgumentListBuilder();
+		args.add(structure.getPathToExecutable());
 		if (StringUtils.isNotBlank(mainParams)) {
 			args.add("-m");
 			args.add(mainParams);
@@ -179,40 +244,34 @@ public class StructurePopulationBuilder extends Builder {
 			args.add("-o");
 			args.add(new FilePath(workspace, outFile).getRemote());
 		}
-
-		Map<String, String> env = build.getEnvironment(listener);
-
-		final Integer exitCode = launcher.launch().cmds(args).envs(env)
-				.stdout(listener).pwd(build.getModuleRoot()).join();
-
-		if (exitCode != 0) {
-			listener.getLogger().println(
-					"Error executing Structure. Exit code : " + exitCode);
-			return Boolean.FALSE;
-		} else {
-			listener.getLogger().println("Successfully executed Structure.");
-			return Boolean.TRUE;
-		}
-		
-		// TODO: send the outfile back to the master
+		return args;
 	}
-	
-	@Extension
-	public static class DescriptorImpl extends Descriptor<Builder> {
-
-		public DescriptorImpl() {
-			super(StructurePopulationBuilder.class);
-			load();
-		}
-		
-		/* (non-Javadoc)
-		 * @see hudson.model.Descriptor#getDisplayName()
-		 */
-		@Override
-		public String getDisplayName() {
-			return "Execute Structure for a population (K)";
-		}
-		
+	/**
+	 * Throws UnsupportedOperationException, as TestBuilder.
+	 * @throws UnsupportedOperationException always
+	 */
+	@Override
+	public Descriptor<Builder> getDescriptor() {
+		throw new UnsupportedOperationException();
 	}
-
+//	/**
+//	 * Le builder of Structure Population Builder.
+//	 * @author Bruno P. Kinoshita - http://www.kinoshita.eti.br
+//	 * @since 0.1
+//	 */
+//	@Extension
+//	public static class DescriptorImpl extends Descriptor<Builder> {
+//		public DescriptorImpl() {
+//			super(StructurePopulationBuilder.class);
+//			load();
+//		}
+//		/* (non-Javadoc)
+//		 * @see hudson.model.Descriptor#getDisplayName()
+//		 */
+//		@Override
+//		public String getDisplayName() {
+//			return "Execute Structure for a population (K)";
+//		}
+//		
+//	}
 }

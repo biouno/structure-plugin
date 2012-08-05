@@ -23,6 +23,7 @@
  */
 package org.biouno.structure.parser;
 
+import java.io.Serializable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -32,7 +33,9 @@ import java.util.regex.Pattern;
  * @author Bruno P. Kinoshita - http://www.kinoshita.eti.br
  * @since 0.1
  */
-public class MainParamsParser {
+public class MainParamsParser implements Serializable {
+
+	private static final long serialVersionUID = 4974596043369293623L;
 
 	private static final String REGEX = "(\\t*|\\s*)?#(\\t*|\\s*)?define(\\t*|\\s*)+(\\w+)(\\t*|\\s*)+(.*)";
 	

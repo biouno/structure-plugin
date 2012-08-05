@@ -5,6 +5,7 @@ import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.BuildListener;
+import hudson.model.Result;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.FreeStyleProject;
@@ -12,14 +13,12 @@ import hudson.model.Hudson;
 import hudson.model.labels.LabelAtom;
 import hudson.tasks.Builder;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.biouno.structure.parser.MainParamsParser;
 import org.biouno.structure.parser.ParserException;
@@ -223,10 +222,10 @@ public class StructureBuilder extends Builder {
 			listener.getLogger().println("Generating mainparams for " + i + " K");
 			try {
 				String mainParamContent = parser.parse(this.mainParams, i);
-				File mainparams = new File(workspace.getRemote(), "mainparams.param_set.k" + i);
-				FileUtils.writeStringToFile(mainparams, mainParamContent);
-				File extraparams = new File(workspace.getRemote(), "extraparams");
-				FileUtils.writeStringToFile(extraparams, this.extraParams);
+				FilePath mainparamsFilePath = new FilePath(workspace, "mainparams.param_set.k" + i);
+				mainparamsFilePath.write(mainParamContent, "UTF-8");
+				FilePath extraparamsFilePath = new FilePath(workspace, "extraparams");
+				extraparamsFilePath.write(extraParams, "UTF-8");
 
 				// Create one job for each K/mainparam
 				String jobName = "" + build.getProject().getName()
@@ -248,8 +247,8 @@ public class StructureBuilder extends Builder {
 				// Include structure builder (this one executes the tool)
 				StructurePopulationBuilder leBuilder = new StructurePopulationBuilder(
 						build.getProject().getName(), 
-						structureInstallation, maxPops, numLoci, numInds,
-						inFile, outFile, mainparams.getName(), extraparams.getName());
+						structureInstallation, i, numLoci, numInds,
+						inFile, outFile, mainparamsFilePath.getName(), extraparamsFilePath.getName());
 				((FreeStyleProject)project).getBuildersList().add(leBuilder); 
 				
 				// Set the label for the slave
@@ -260,6 +259,11 @@ public class StructureBuilder extends Builder {
 				futures.add(future);
 			} catch (ParserException e) {
 				// TODO Auto-generated catch block
+				build.setResult(Result.UNSTABLE);
+				e.printStackTrace();
+			} catch (Throwable e) {
+				// TODO Auto-generated catch block
+				build.setResult(Result.UNSTABLE);
 				e.printStackTrace();
 			}
 		}
