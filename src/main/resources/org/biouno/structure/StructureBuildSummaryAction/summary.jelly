@@ -1,0 +1,25 @@
+<j:jelly xmlns:j="jelly:core"
+	xmlns:d="jelly:define"
+    xmlns:l="/lib/layout"
+    xmlns:t="/lib/hudson"
+	xmlns:f="/lib/form"
+    xmlns:i="jelly:fmt">
+    <t:summary icon="/plugin/structure/icons/icon-details.gif">
+        <p><strong>Structure results</strong></p>
+        <ul>        
+		  <li>K=${it.k}</li>
+		</ul>
+		<p>
+		  <table border="1" width="100%">
+		    <tr>
+		      <th>K</th><th>Output file</th>
+		    </tr>
+		    <j:forEach items="${it.files}" var="file" indexVar="i">
+		      <tr>
+                <td>${i +1}</td><td><a href="${relativeUrlPath}structureResults/showFileContent?file=${file}">${file}</a></td>
+              </tr>
+		    </j:forEach>
+		  </table>
+		</p>
+	</t:summary>
+</j:jelly>

@@ -40,14 +40,33 @@ import java.io.IOException;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
+import org.biouno.structure.util.Messages;
 
 /**
- * A Builder that executes structure for one population.
+ * A builder that executes structure for a K parameter. This builder is 
+ * used by {@link StructureBuilder StructureBuilder}, and has no user 
+ * interface. 
  * @author Bruno P. Kinoshita - http://www.kinoshita.eti.br
  * @see StructureBuilder
  * @since 0.1
  */
-public class StructurePopulationBuilder extends Builder {
+class StructureKBuilder extends Builder {
+	/*
+	 * Structure command line option constants.
+	 */
+	private static final String MAINPARAMS_OPTION = "-m";
+	private static final String EXTRAPARAMS_OPTION = "-e";
+	private static final String MAXPOPS_OPTION = "-K";
+	private static final String NUMLOCI_OPTION = "-L";
+	private static final String NUMINDS_OPTION = "-N";
+	private static final String INFILE_OPTION = "-i";
+	private static final String OUTFILE_OPTION = "-o";
+	/*
+	 * Structure constants used for the output file name.
+	 */
+	private static final String STRUCTURE_RUN = "_run_";
+	public static final String STRUCTURE_RUN_OUTPUT_DIRECTORY = "structure_run_output";
+	private static final String STRUCTURE_OUTPUT_FILE_SUFFIX = "_f";
 	/**
 	 * Name of structure project.
 	 */
@@ -96,7 +115,7 @@ public class StructurePopulationBuilder extends Builder {
 	 * @param mainParams
 	 * @param extraParams
 	 */
-	public StructurePopulationBuilder(String structureProject, StructureInstallation structure,
+	public StructureKBuilder(String structureProject, StructureInstallation structure,
 			Integer maxPops, Integer numLoci, Integer numInds, String inFile, 
 			String outFile, String mainParams, String extraParams) {
 		super();
@@ -121,64 +140,62 @@ public class StructurePopulationBuilder extends Builder {
 	@Override
 	public boolean perform(AbstractBuild<?, ?> build, Launcher launcher,
 			BuildListener listener) throws InterruptedException, IOException {
-		listener.getLogger().println("Launching structure for K " + this.maxPops);
+		listener.getLogger().println(Messages.StructureKBuilder_InvokingStructureK(this.maxPops));
 
 		// prepare workspace
 		final FilePath workspace = build.getWorkspace();
-		listener.getLogger().println("Using workspace " + workspace.getRemote());
+		listener.getLogger().println(Messages.StructureKBuilder_DisplayWorkspace(workspace.getRemote()));
 		if(Computer.currentComputer() instanceof SlaveComputer) {
-			listener.getLogger().println("Running on slave " + Computer.currentComputer().getName());
+			listener.getLogger().println(Messages.StructureKBuilder_DisplaySlave(Computer.currentComputer().getName()));
 		} else {
-			listener.getLogger().println("Running on master");
+			listener.getLogger().println(Messages.StructureKBuilder_DisplayMaster());
 		}
 		if(!workspace.exists()) {
-			listener.getLogger().println("Creating workspace at " + workspace.getRemote());
+			listener.getLogger().println(Messages.StructureKBuilder_CreateWorkspace(workspace.getRemote()));
 			workspace.mkdirs();
 			if(!workspace.exists()) {
-				throw new AbortException("Couldn't create workspace");
+				throw new AbortException(Messages.StructureKBuilder_CreateWorkspaceError());
 			}
 		}
-		
+
 		// Prepare the project with structure files
 		AbstractProject<?, ?> project = (AbstractProject<?, ?>) Hudson.getInstance().getItem(structureProject);
 		if(project == null) {
-			listener.getLogger().println("Non existing structure project, using this build's project as structure project");
-			project = build.getProject(); // Use this project if no other was provided
+			throw new AbortException(Messages.StructureKBuilder_MissingStructureProject());
 		}
 		//final FilePath structureWorkspace = new FilePath(new File(project.getRootDir(), "workspace"));
 		if(!project.getLastBuild().isBuilding()) {
-			throw new AbortException("Structure project is not building");
+			throw new AbortException(Messages.StructureKBuilder_InvalidStructureProjectState());
 		}
 		final FilePath structureWorkspace = project.getLastBuild().getWorkspace();
-		
+
 		// Copy structure files from other project to this project's workspace 
 		// handling with care in case of a distributed env.
-		listener.getLogger().println("Copying structure files from " + structureWorkspace.getRemote());
+		listener.getLogger().println(Messages.StructureKBuilder_CopyStructureFiles(structureWorkspace.getRemote()));
 		this.copyStructureFiles(workspace, structureWorkspace);
-		
+
 		// Prepare the command line arguments, and then execute it!
 		final ArgumentListBuilder args = this.createStructureArgs(workspace); 
 		Map<String, String> env = build.getEnvironment(listener);
 		final Integer exitCode = launcher.launch().cmds(args).envs(env)
 				.stdout(listener).pwd(build.getModuleRoot()).join();
-		listener.getLogger().println("Preparing to execute structure. Command line args: " + args.toStringWithQuote());
+		listener.getLogger().println(Messages.StructureKBuilder_ExecuteStructure(args.toStringWithQuote()));
 
 		if (exitCode != 0) {
-			listener.getLogger().println(
-					"Error executing Structure. Exit code : " + exitCode);
+			listener.getLogger().println(Messages.StructureKBuilder_ExecuteStructureError(exitCode));
 			return Boolean.FALSE;
 		} else {
 			// If the command was executed with success, send the outfile back to the master
-			FilePath outFileFilePath = new FilePath(workspace, outFile+"_f");
+			FilePath outFileFilePath = new FilePath(workspace, outFile+STRUCTURE_OUTPUT_FILE_SUFFIX);
 			if(outFileFilePath.exists()) {
-				FilePath structureOutputFilePath = new FilePath(structureWorkspace, "structure_run_output");
+				FilePath structureOutputFilePath = new FilePath(structureWorkspace, STRUCTURE_RUN_OUTPUT_DIRECTORY);
 				if(!structureOutputFilePath.exists()) {
 					structureOutputFilePath.mkdirs();
 				}
-				outFileFilePath.copyTo(new FilePath(structureOutputFilePath, outFile+"_run_"+this.maxPops+"_f"));
+				outFileFilePath.copyTo(new FilePath(structureOutputFilePath, outFile+STRUCTURE_RUN+this.maxPops+STRUCTURE_OUTPUT_FILE_SUFFIX));
 			}
 			
-			listener.getLogger().println("Successfully executed Structure.");
+			listener.getLogger().println(Messages.StructureKBuilder_ExecuteStructureSuccess());
 			return Boolean.TRUE;
 		}
 	}
@@ -217,31 +234,31 @@ public class StructurePopulationBuilder extends Builder {
 		ArgumentListBuilder args = new ArgumentListBuilder();
 		args.add(structure.getPathToExecutable());
 		if (StringUtils.isNotBlank(mainParams)) {
-			args.add("-m");
+			args.add(MAINPARAMS_OPTION);
 			args.add(mainParams);
 		}
 		if (StringUtils.isNotBlank(extraParams)) {
-			args.add("-e");
+			args.add(EXTRAPARAMS_OPTION);
 			args.add(extraParams);
 		}
 		if (maxPops != null && maxPops > 0) {
-			args.add("-K");
+			args.add(MAXPOPS_OPTION);
 			args.add(maxPops);
 		}
 		if (numLoci != null && numLoci > 0) {
-			args.add("-L");
+			args.add(NUMLOCI_OPTION);
 			args.add(numLoci);
 		}
 		if (numInds != null && numInds > 0) {
-			args.add("-N");
+			args.add(NUMINDS_OPTION);
 			args.add(numInds);
 		}
 		if (StringUtils.isNotBlank(inFile)) {
-			args.add("-i");
+			args.add(INFILE_OPTION);
 			args.add(new FilePath(workspace, inFile).getRemote());
 		}
 		if (StringUtils.isNotBlank(outFile)) {
-			args.add("-o");
+			args.add(OUTFILE_OPTION);
 			args.add(new FilePath(workspace, outFile).getRemote());
 		}
 		return args;
@@ -254,24 +271,4 @@ public class StructurePopulationBuilder extends Builder {
 	public Descriptor<Builder> getDescriptor() {
 		throw new UnsupportedOperationException();
 	}
-//	/**
-//	 * Le builder of Structure Population Builder.
-//	 * @author Bruno P. Kinoshita - http://www.kinoshita.eti.br
-//	 * @since 0.1
-//	 */
-//	@Extension
-//	public static class DescriptorImpl extends Descriptor<Builder> {
-//		public DescriptorImpl() {
-//			super(StructurePopulationBuilder.class);
-//			load();
-//		}
-//		/* (non-Javadoc)
-//		 * @see hudson.model.Descriptor#getDisplayName()
-//		 */
-//		@Override
-//		public String getDisplayName() {
-//			return "Execute Structure for a population (K)";
-//		}
-//		
-//	}
 }

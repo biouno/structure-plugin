@@ -31,25 +31,23 @@ import org.kohsuke.stapler.DataBoundConstructor;
  * Stores information about the installation of Structure. This information is 
  * used by the Builder to call Structure. This information is stored within a 
  * Descriptor that is, by its turn, used in the Builder.
- * 
  * @author Bruno P. Kinoshita - http://www.kinoshita.eti.br
  * @since 0.1
  */
 public class StructureInstallation implements Serializable {
-
+	/**
+	 * serialVersionUID.
+	 */
 	private static final long serialVersionUID = -7368296463056373402L;
-
 	/**
 	 * A name for a Structure installation. This name is referenced in the Job 
 	 * set up.
 	 */
 	private final String name;
-	
 	/**
-	 * Path to Structure.
+	 * Path to Structure executable.
 	 */
 	private final String pathToExecutable;
-	
 	/**
 	 * @param name the name for a Structure installation
 	 * @param pathToExecutable the path for a Structure executable 
@@ -59,19 +57,16 @@ public class StructureInstallation implements Serializable {
 		this.name = name;
 		this.pathToExecutable = pathToExecutable;
 	}
-	
 	/**
 	 * @return the name
 	 */
 	public String getName() {
 		return name;
 	}
-	
 	/**
 	 * @return the pathToExecutable
 	 */
 	public String getPathToExecutable() {
 		return pathToExecutable;
 	}
-	
 }

@@ -29,39 +29,33 @@ package org.biouno.structure.parser;
  * @since 0.1
  */
 public class ParserException extends Exception {
-
-	private static final long serialVersionUID = -8121296936258799110L;
-
 	/**
-	 * 
+	 * serialVersionUID.
+	 */
+	private static final long serialVersionUID = -8121296936258799110L;
+	/**
+	 * No args constructor.
 	 */
 	public ParserException() {
-		// Auto-generated constructor stub
+		super();
 	}
-
 	/**
 	 * @param message
 	 */
 	public ParserException(String message) {
 		super(message);
-		// Auto-generated constructor stub
 	}
-
 	/**
 	 * @param cause
 	 */
 	public ParserException(Throwable cause) {
 		super(cause);
-		// Auto-generated constructor stub
 	}
-
 	/**
 	 * @param message
 	 * @param cause
 	 */
 	public ParserException(String message, Throwable cause) {
 		super(message, cause);
-		// Auto-generated constructor stub
 	}
-
 }

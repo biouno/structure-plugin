@@ -36,25 +36,32 @@ import org.kohsuke.stapler.StaplerRequest;
 
 /**
  * Descriptor of Structure builder.
- * 
  * @author Bruno P. Kinoshita - http://www.kinoshita.eti.br
  * @since 0.1
  * @see {@link StructureBuilder}
  */
 public class StructureBuilderDescriptor extends Descriptor<Builder> {
-
+	/**
+	 * Exposed for jelly.
+	 */
 	public final Class<StructureBuilder> builderType = StructureBuilder.class;
-	
+	/**
+	 * Structure name displayed in the build configuration screen.
+	 */
 	private static final String DISPLAY_NAME = Messages.StructureDescriptor_DisplayName();
-	
+	/**
+	 * The list of available installations. They are copied when the form is 
+	 * submitted.
+	 */
 	@CopyOnWrite
 	private volatile StructureInstallation[] installations = new StructureInstallation[0];
-	
+	/**
+	 * No args constructor to ensure the descriptor pattern.
+	 */
 	public StructureBuilderDescriptor() {
 		super(StructureBuilder.class);
 		load();
 	}
-	
 	/* (non-Javadoc)
 	 * @see hudson.model.Descriptor#getDisplayName()
 	 */
@@ -62,11 +69,18 @@ public class StructureBuilderDescriptor extends Descriptor<Builder> {
 	public String getDisplayName() {
 		return DISPLAY_NAME;
 	}
-	
+	/**
+	 * Gets the list of installations. Never <code>null</code>.
+	 * @return StructureInstallation[]
+	 */
 	public StructureInstallation[] getInstallations() {
 		return this.installations;
 	}
-	
+	/**
+	 * Gets an installation by its name, or <code>null</code> if none found.
+	 * @param name the installation name
+	 * @return StructureInstallation or <code>null</code>
+	 */
 	public StructureInstallation getInstallationByName(String name) {
 		StructureInstallation found = null;
 		for(StructureInstallation installation : this.installations) {
@@ -79,7 +93,6 @@ public class StructureBuilderDescriptor extends Descriptor<Builder> {
 		}
 		return found;
 	}
-	
 	/* (non-Javadoc)
 	 * @see hudson.model.Descriptor#configure(org.kohsuke.stapler.StaplerRequest, net.sf.json.JSONObject)
 	 */
@@ -90,7 +103,11 @@ public class StructureBuilderDescriptor extends Descriptor<Builder> {
 		save();
 		return Boolean.TRUE;
 	}
-	
+	/**
+	 * Validates required fields.
+	 * @param value the value
+	 * @return FormValidation
+	 */
 	public FormValidation doRequired(@QueryParameter String value) {
 		FormValidation returnValue = FormValidation.ok();
 		if(StringUtils.isBlank(value)) {
@@ -98,7 +115,11 @@ public class StructureBuilderDescriptor extends Descriptor<Builder> {
 		}
 		return returnValue;
 	}
-	
+	/**
+	 * Validates required long fields.
+	 * @param value the value
+	 * @return FormValidation
+	 */
 	public FormValidation doLongRequired(@QueryParameter String value) {
 		FormValidation returnValue = FormValidation.ok();
 		if(StringUtils.isNotBlank(value)) {
@@ -110,7 +131,11 @@ public class StructureBuilderDescriptor extends Descriptor<Builder> {
 		}
 		return returnValue;
 	}
-	
+	/**
+	 * Validates required double fields.
+	 * @param value the value
+	 * @return FormValidation
+	 */
 	public FormValidation doDoubleRequired(@QueryParameter String value) {
 		FormValidation returnValue = FormValidation.ok();
 		if(StringUtils.isNotBlank(value)) {
@@ -122,5 +147,4 @@ public class StructureBuilderDescriptor extends Descriptor<Builder> {
 		}
 		return returnValue;
 	}
-	
 }

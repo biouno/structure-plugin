@@ -54,6 +54,9 @@
         <f:entry title="${%Assigned Label}" help="${rootURL}/../plugin/structure/help-label.html">
             <f:textbox name="label" value="${instance.label}" />
         </f:entry>
+        <f:entry title="${%Keep builds created for executing structure for each K?}" help="${rootURL}/../plugin/structure/help-keepJobsForEachK.html">
+            <f:checkbox field="keepJobsForEachK" value="${instance.keepJobsForEachK}" />
+        </f:entry>
     </f:advanced>
 	
 </j:jelly>

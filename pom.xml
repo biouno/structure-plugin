@@ -10,11 +10,11 @@
 
     <inceptionYear>2012</inceptionYear>
 
-    <artifactId>structure-extendend-configuration</artifactId>
-    <name>Structure Extended Configuration Plug-in</name>
-    <version>1.0-SNAPSHOT</version>
+    <artifactId>structure</artifactId>
+    <name>Structure Plug-in</name>
+    <version>0.1-SNAPSHOT</version>
 	<packaging>hpi</packaging>
-	<description>This plug-in integrates Jenkins to Structure with an extended configuration.</description>
+	<description>This plug-in integrates Jenkins to Structure.</description>
 
 	<developers>
 		<developer>
