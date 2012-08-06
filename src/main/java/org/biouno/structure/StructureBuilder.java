@@ -12,6 +12,7 @@ import hudson.model.AbstractProject;
 import hudson.model.Cause.UserCause;
 import hudson.model.FreeStyleProject;
 import hudson.model.Hudson;
+import hudson.model.Label;
 import hudson.model.labels.LabelAtom;
 import hudson.tasks.Builder;
 
@@ -19,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
@@ -378,5 +380,13 @@ public class StructureBuilder extends Builder {
 	@Override
 	public StructureBuilderDescriptor getDescriptor() {
 		return (StructureBuilderDescriptor) super.getDescriptor();
+	}
+	/**
+	 * Fills labels items.
+	 * @return ListBoxModel
+	 */
+	public Set<Label> getLabels() {
+		Set<Label> labels = Hudson.getInstance().getLabels();
+		return labels;
 	}
 }

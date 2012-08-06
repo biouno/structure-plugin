@@ -1,7 +1,7 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define"
 	xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
 
-	<f:entry title="${%Structure installation}">
+	<f:entry title="${%Structure installation}" help="${rootURL}/../plugin/structure/help-structureInstallationName.html">
 		<select class="setting-input" name="Structure.structureInstallationName">
 			<option>(Default)</option>
 			<j:forEach var="inst" items="${descriptor.installations}">
@@ -40,19 +40,34 @@
         <f:textbox name="outFile" value="${instance.outFile}" checkUrl="'${rootURL}/builder/StructureBuilder/required?value='+escape(this.value)" />
     </f:entry>
     
-    <f:entry title="${%Main parameters (mainparams)}" help="${rootURL}/../plugin/structure/help-mainParams.html">
-        <f:textarea name="mainParams" value="${instance.mainParams}" checkUrl="'${rootURL}/builder/StructureBuilder/required?value='+escape(this.value)" />
+    <style type="text/css">
+      div.CodeMirror {
+        height: 200px !important;
+      }
+      div.CodeMirror-scroll {
+        height: 200px;
+        overflow: auto;
+      }
+    </style>
+    <f:entry title="${%Main parameters}" help="${rootURL}/../plugin/structure/help-mainParams.html">
+        <f:textarea name="mainParams" 
+            value="${instance.mainParams}"
+            codemirror-mode="shell" 
+            codemirror-config="mode: 'text/x-sh'" />
     </f:entry>
     
-    <f:entry title="${%Extra parameters (extraparams)}" help="${rootURL}/../plugin/structure/help-extraParams.html">
-        <f:textarea name="extraParams" value="${instance.extraParams}" checkUrl="'${rootURL}/builder/StructureBuilder/required?value='+escape(this.value)" />
+    <f:entry title="${%Extra parameters}" help="${rootURL}/../plugin/structure/help-extraParams.html">
+        <f:textarea name="extraParams" 
+            value="${instance.extraParams}"
+            codemirror-mode="shell" 
+            codemirror-config="mode: 'text/x-sh'" />
     </f:entry>
     
     <f:block>Jenkins slaves options</f:block>
     
     <f:advanced>
         <f:entry title="${%Assigned Label}" help="${rootURL}/../plugin/structure/help-label.html">
-            <f:textbox name="label" value="${instance.label}" />
+            <f:editableComboBox id="${id}Labels" field="label" items="${instance.labels}"/>
         </f:entry>
         <f:entry title="${%Keep builds created for executing structure for each K?}" help="${rootURL}/../plugin/structure/help-keepJobsForEachK.html">
             <f:checkbox field="keepJobsForEachK" value="${instance.keepJobsForEachK}" />

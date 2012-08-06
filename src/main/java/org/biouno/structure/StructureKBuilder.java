@@ -193,7 +193,7 @@ class StructureKBuilder extends Builder {
 					structureOutputFilePath.mkdirs();
 				}
 				outFileFilePath.copyTo(new FilePath(structureOutputFilePath, outFile+STRUCTURE_RUN+this.maxPops+STRUCTURE_OUTPUT_FILE_SUFFIX));
-			}
+			} // TODO: handle when the jobs are executed at the master, and the structure project is executed at the slave
 			
 			listener.getLogger().println(Messages.StructureKBuilder_ExecuteStructureSuccess());
 			return Boolean.TRUE;
