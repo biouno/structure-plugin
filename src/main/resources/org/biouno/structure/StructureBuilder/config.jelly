@@ -63,15 +63,4 @@
             codemirror-config="mode: 'text/x-sh'" />
     </f:entry>
     
-    <f:block>Jenkins slaves options</f:block>
-    
-    <f:advanced>
-        <f:entry title="${%Assigned Label}" help="${rootURL}/../plugin/structure/help-label.html">
-            <f:editableComboBox id="${id}Labels" field="label" items="${instance.labels}"/>
-        </f:entry>
-        <f:entry title="${%Keep builds created for executing structure for each K?}" help="${rootURL}/../plugin/structure/help-keepJobsForEachK.html">
-            <f:checkbox field="keepJobsForEachK" value="${instance.keepJobsForEachK}" />
-        </f:entry>
-    </f:advanced>
-	
 </j:jelly>

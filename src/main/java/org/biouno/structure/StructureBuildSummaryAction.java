@@ -27,10 +27,8 @@ import hudson.FilePath;
 import hudson.model.Action;
 import hudson.model.AbstractBuild;
 
-import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.io.FileUtils;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
@@ -107,14 +105,18 @@ public class StructureBuildSummaryAction implements Action {
 		String fileContents = "";
 		if(request.hasParameter("file")) {
 			String fileName = request.getParameter("file");
-			FilePath workspace = owner.getWorkspace();
-			if(workspace != null) {
-				File outputFile = new File(workspace.getRemote(), StructureKBuilder.STRUCTURE_RUN_OUTPUT_DIRECTORY + "/" +fileName);
+			try {
+				FilePath workspace = owner.getWorkspace();
+				FilePath outputFile = new FilePath(workspace, StructureBuilder.STRUCTURE_RUN_OUTPUT_DIRECTORY + "/" + fileName);
 				if(outputFile.exists()) {
-					fileContents = FileUtils.readFileToString(outputFile);
-					response.getOutputStream().println(fileContents);
+					fileContents = outputFile.readToString();
 				}
+			} catch(IOException ioe) {
+				fileContents = ioe.getMessage();
+			} catch(InterruptedException ie) {
+				fileContents = ie.getMessage();
 			}
+			response.getOutputStream().println(fileContents);
 		}
 	}
 	/**
@@ -123,7 +125,7 @@ public class StructureBuildSummaryAction implements Action {
 	 * @return the output folder
 	 */
 	public String getStructureOutputFolder() {
-		return StructureKBuilder.STRUCTURE_RUN_OUTPUT_DIRECTORY;
+		return StructureBuilder.STRUCTURE_RUN_OUTPUT_DIRECTORY;
 	}
 	/*
 	 * (non-Javadoc)
