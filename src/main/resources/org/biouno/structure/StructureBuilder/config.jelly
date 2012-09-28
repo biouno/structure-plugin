@@ -11,10 +11,6 @@
 	</f:entry>
 	
 	<f:block>Structure parameters</f:block>
-	
-	<f:entry title="${%Number of populations assumed (MAXPOPS)}" help="${rootURL}/../plugin/structure/help-maxPops.html">
-        <f:textbox name="maxPops" value="${instance.maxPops}" checkUrl="'${rootURL}/builder/StructureBuilder/longRequired?value='+escape(this.value)" />
-    </f:entry>
     
     <f:entry title="${%Number of loci in data file (NUMLOCI)}" help="${rootURL}/../plugin/structure/help-numLoci.html">
         <f:textbox name="numLoci" value="${instance.numLoci}" checkUrl="'${rootURL}/builder/StructureBuilder/longRequired?value='+escape(this.value)" />

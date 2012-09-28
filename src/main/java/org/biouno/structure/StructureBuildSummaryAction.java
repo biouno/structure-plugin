@@ -107,7 +107,7 @@ public class StructureBuildSummaryAction implements Action {
 			String fileName = request.getParameter("file");
 			try {
 				FilePath workspace = owner.getWorkspace();
-				FilePath outputFile = new FilePath(workspace, StructureBuilder.STRUCTURE_RUN_OUTPUT_DIRECTORY + "/" + fileName);
+				FilePath outputFile = new FilePath(workspace,fileName);
 				if(outputFile.exists()) {
 					fileContents = outputFile.readToString();
 				}

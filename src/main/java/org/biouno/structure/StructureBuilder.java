@@ -9,11 +9,9 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Hudson;
 import hudson.model.Label;
-import hudson.model.Slave;
 import hudson.tasks.Builder;
 import hudson.util.ArgumentListBuilder;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
@@ -209,11 +207,9 @@ public class StructureBuilder extends Builder {
 			throw new AbortException(Messages.StructureBuilder_InvalidStructureInstallation());
 		}
 		
-		// Env vars
-		final Map<String, String> env = build.getEnvironment(listener);
-		
-		// Get K from the env vars, 1 is the default value
-		int k = this.getK(env, DEFAULT_K);
+		// Get K from the build vars, 1 is the default value
+		Map<String, String> buildVariables = build.getBuildVariables();
+		int k = this.getK(buildVariables, DEFAULT_K);
 		
 		// Inform the user about some important info
 		listener.getLogger().println("Using structure " + structureInstallation.getName() + " at " + structureInstallation.getPathToExecutable());
@@ -240,6 +236,8 @@ public class StructureBuilder extends Builder {
 		final ArgumentListBuilder args = this.createStructureArgs(structureInstallation, k, mainParamsFile, extraParamsFile, workspace); 
 		
 		// Execute structure
+		// Env vars
+		final Map<String, String> env = build.getEnvironment(listener);
 		listener.getLogger().println(Messages.StructureKBuilder_ExecuteStructure(args.toStringWithQuote()));
 		final Integer exitCode = launcher.launch().cmds(args).envs(env)
 				.stdout(listener).pwd(build.getModuleRoot()).join();
@@ -251,22 +249,7 @@ public class StructureBuilder extends Builder {
 			// If the command was executed with success, send the outfile back to the master
 			FilePath outFileFilePath = new FilePath(workspace, outFile+STRUCTURE_OUTPUT_FILE_SUFFIX);
 			if(outFileFilePath.exists()) {
-				FilePath structureOutputFilePath = null;
-				if(project.getLastBuild().getBuiltOn() instanceof Slave) {
-					FilePath hudsonHome = Hudson.getInstance().getRootPath();
-					structureOutputFilePath = new FilePath(hudsonHome, "jobs/"+project.getName()+"/workspace/"+STRUCTURE_RUN_OUTPUT_DIRECTORY);
-				} else {
-					structureOutputFilePath = new FilePath(workspace, STRUCTURE_RUN_OUTPUT_DIRECTORY);
-				}
-				if(!structureOutputFilePath.exists()) {
-					structureOutputFilePath.mkdirs();
-				}
-				outFileFilePath.copyTo(new FilePath(structureOutputFilePath, outFile+STRUCTURE_RUN+k+STRUCTURE_OUTPUT_FILE_SUFFIX));
-				
-				// Adds build action for displaying build summary and links for output files
-				final File outputFolder = new File(workspace.getRemote(), STRUCTURE_RUN_OUTPUT_DIRECTORY);
-				final String[] list = outputFolder.list();
-				build.addAction(new StructureBuildSummaryAction(build, list, k));
+				build.addAction(new StructureBuildSummaryAction(build, new String[]{outFileFilePath.getName()}, k));
 			} else {
 				listener.fatalError("Couldn't find structure output file. Expected " + outFileFilePath.getRemote());
 			}
@@ -276,13 +259,13 @@ public class StructureBuilder extends Builder {
 		}
 	}
 	/**
-	 * Get K value from 'K' env var or return its default value.
-	 * @param env map of env vars
+	 * Get K value from 'K' build vars or return its default value.
+	 * @param buildVariables map of env vars
 	 * @param defaultK default value
 	 * @return k or its default value
 	 */
-	private int getK(Map<String, String> env, int defaultK) {
-		String kValue = env.get("K");
+	private int getK(Map<String, String> buildVariables, int defaultK) {
+		String kValue = buildVariables.get("K");
 		int k = defaultK;
 		if(StringUtils.isNotBlank(kValue)) {
 			try {
