@@ -16,7 +16,7 @@
 		    </tr>
 		    <j:forEach items="${it.files}" var="file" indexVar="i">
 		      <tr>
-                <td>${i +1}</td><td><a href="${relativeUrlPath}structureResults/showFileContent?file=${file}">${file}</a></td>
+                <td>${it.k}</td><td><a href="${relativeUrlPath}structureResults/showFileContent?file=${file}">${file}</a></td>
               </tr>
 		    </j:forEach>
 		  </table>

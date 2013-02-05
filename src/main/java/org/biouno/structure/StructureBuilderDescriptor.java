@@ -103,6 +103,12 @@ public class StructureBuilderDescriptor extends Descriptor<Builder> {
 		save();
 		return Boolean.TRUE;
 	}
+	@Override
+	public Builder newInstance(StaplerRequest arg0, JSONObject arg1)
+			throws hudson.model.Descriptor.FormException {
+		// TODO Auto-generated method stub
+		return super.newInstance(arg0, arg1);
+	}
 	/**
 	 * Validates required fields.
 	 * @param value the value

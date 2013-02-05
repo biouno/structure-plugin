@@ -1,12 +1,12 @@
 package org.biouno.structure;
 
 import hudson.AbortException;
+import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.BuildListener;
 import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
 import hudson.model.Hudson;
 import hudson.model.Label;
 import hudson.tasks.Builder;
@@ -55,10 +55,6 @@ public class StructureBuilder extends Builder {
 	public static final String MAINPARAMS_PARAM_SET_K_PREFIX = "mainparams.param_set.k";
 	public static final String STRUCTURE_EXTRAMPARAMS_FILENAME = "extraparams";
 	public static final String STRUCTURE_FILES_ENCODING = "UTF-8";
-	/*
-	 * K default value 
-	 */
-	public static final int DEFAULT_K = 1;
 	/**
 	 * Le builder extension.
 	 */
@@ -106,6 +102,10 @@ public class StructureBuilder extends Builder {
 	 */
 	private final String extraParams;
 	/**
+	 * K.
+	 */
+	private final String kValue;
+	/**
 	 * Constructor with args, called from Jelly populating the object properties
 	 * from the form.
 	 * @param structureInstallationName
@@ -117,12 +117,13 @@ public class StructureBuilder extends Builder {
 	 * @param outFile
 	 * @param mainParams
 	 * @param extraParams
+	 * @param kValue
 	 */
 	@DataBoundConstructor
 	public StructureBuilder(String structureInstallationName,
 			Integer numLoci, Integer numInds, Long burnIn, Long numReps,
 			String inFile, String outFile, String mainParams,
-			String extraParams) {
+			String extraParams, String kValue) {
 		super();
 		this.structureInstallationName = structureInstallationName;
 		this.numLoci = numLoci;
@@ -133,6 +134,7 @@ public class StructureBuilder extends Builder {
 		this.outFile = outFile;
 		this.mainParams = mainParams;
 		this.extraParams = extraParams;
+		this.kValue = kValue;
 		parser = new MainParamsParser(numLoci, numInds, burnIn, numReps, inFile, outFile);
 	}
 	/**
@@ -190,6 +192,12 @@ public class StructureBuilder extends Builder {
 		return extraParams;
 	}
 	/**
+	 * @return the value of k
+	 */
+	public String getKValue() {
+		return kValue;
+	}
+	/**
 	 * Creates one mainparam file for each K, and creates jobs for running 
 	 * structure using each mainparam file. Finally, the output files are 
 	 * sent back to this builder's job workspace. Then an action is included in 
@@ -201,22 +209,28 @@ public class StructureBuilder extends Builder {
 	public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, final BuildListener listener) throws AbortException,InterruptedException, IOException {
 		listener.getLogger().println(Messages.StructureBuilder_InvokingStructure());
 
+		final EnvVars envVars = build.getEnvironment(listener);
+		envVars.overrideAll(build.getBuildVariables());
+		
 		// Get the structure installation used
 		final StructureInstallation structureInstallation = DESCRIPTOR.getInstallationByName(this.structureInstallationName);
 		if (structureInstallation == null) {
 			throw new AbortException(Messages.StructureBuilder_InvalidStructureInstallation());
 		}
 		
-		// Get K from the build vars, 1 is the default value
-		Map<String, String> buildVariables = build.getBuildVariables();
-		int k = this.getK(buildVariables, DEFAULT_K);
+		// Get K
+		int k;
+		try {
+			k = Integer.parseInt(envVars.expand(kValue));
+		} catch (NumberFormatException nfe) {
+			throw new AbortException("Couldn't expand K: " + nfe.getMessage());
+		}
 		
 		// Inform the user about some important info
 		listener.getLogger().println("Using structure " + structureInstallation.getName() + " at " + structureInstallation.getPathToExecutable());
 		listener.getLogger().println("K="+k);
 		
 		final FilePath workspace = build.getWorkspace();
-		final AbstractProject<?, ?> project = build.getProject();
 		
 		// Replace variables with the values provided by the user in the job configuration
 		String mainParamsFile = MAINPARAMS_PARAM_SET_K_PREFIX + k;
@@ -232,8 +246,10 @@ public class StructureBuilder extends Builder {
 			throw new AbortException(pe.getMessage());
 		}
 		
+		final String outputFile = envVars.expand(outFile);
+		
 		// Create structure command line
-		final ArgumentListBuilder args = this.createStructureArgs(structureInstallation, k, mainParamsFile, extraParamsFile, workspace); 
+		final ArgumentListBuilder args = this.createStructureArgs(structureInstallation, k, mainParamsFile, extraParamsFile, outputFile, workspace); 
 		
 		// Execute structure
 		// Env vars
@@ -247,7 +263,7 @@ public class StructureBuilder extends Builder {
 			return Boolean.FALSE;
 		} else {
 			// If the command was executed with success, send the outfile back to the master
-			FilePath outFileFilePath = new FilePath(workspace, outFile+STRUCTURE_OUTPUT_FILE_SUFFIX);
+			FilePath outFileFilePath = new FilePath(workspace, outputFile+STRUCTURE_OUTPUT_FILE_SUFFIX);
 			if(outFileFilePath.exists()) {
 				build.addAction(new StructureBuildSummaryAction(build, new String[]{outFileFilePath.getName()}, k));
 			} else {
@@ -259,24 +275,6 @@ public class StructureBuilder extends Builder {
 		}
 	}
 	/**
-	 * Get K value from 'K' build vars or return its default value.
-	 * @param buildVariables map of env vars
-	 * @param defaultK default value
-	 * @return k or its default value
-	 */
-	private int getK(Map<String, String> buildVariables, int defaultK) {
-		String kValue = buildVariables.get("K");
-		int k = defaultK;
-		if(StringUtils.isNotBlank(kValue)) {
-			try {
-				k = Integer.parseInt(kValue);
-			} catch(NumberFormatException nfe) {
-				LOGGER.warning("Invalid K value ["+kValue+"]. Using default value ["+defaultK+"]");
-			}
-		}
-		return k;
-	}
-	/**
 	 * Creates structure args.
 	 * @param structure 
 	 * @param k
@@ -285,7 +283,7 @@ public class StructureBuilder extends Builder {
 	 * @param workspace 
 	 * @return ArgumentListBuilder
 	 */
-	private ArgumentListBuilder createStructureArgs(StructureInstallation structure, int k, String mainParamsFile, String extraParamsFile, FilePath workspace) {
+	private ArgumentListBuilder createStructureArgs(StructureInstallation structure, int k, String mainParamsFile, String extraParamsFile, String outputFile, FilePath workspace) {
 		ArgumentListBuilder args = new ArgumentListBuilder();
 		args.add(structure.getPathToExecutable());
 		// main params
@@ -313,9 +311,9 @@ public class StructureBuilder extends Builder {
 			args.add(new FilePath(workspace, inFile).getRemote());
 		}
 		// output file
-		if (StringUtils.isNotBlank(outFile)) {
+		if (StringUtils.isNotBlank(outputFile)) {
 			args.add(OUTFILE_OPTION);
-			args.add(new FilePath(workspace, outFile).getRemote());
+			args.add(new FilePath(workspace, outputFile).getRemote());
 		}
 		return args;
 	}

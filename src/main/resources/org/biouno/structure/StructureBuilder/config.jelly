@@ -12,6 +12,10 @@
 	
 	<f:block>Structure parameters</f:block>
     
+    <f:entry title="${%K}" help="${rootURL}/../plugin/structure/help-k.html">
+        <f:textbox name="kValue" value="${instance.kValue}" checkUrl="'${rootURL}/builder/StructureBuilder/required?value='+escape(this.value)" />
+    </f:entry>
+    
     <f:entry title="${%Number of loci in data file (NUMLOCI)}" help="${rootURL}/../plugin/structure/help-numLoci.html">
         <f:textbox name="numLoci" value="${instance.numLoci}" checkUrl="'${rootURL}/builder/StructureBuilder/longRequired?value='+escape(this.value)" />
     </f:entry>
