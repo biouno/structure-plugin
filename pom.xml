@@ -4,12 +4,13 @@
 	<parent>
 		<groupId>org.jenkins-ci.plugins</groupId>
 		<artifactId>plugin</artifactId>
-		<version>1.509</version><!-- which version of Jenkins is this plugin built 
+		<version>1.532.2</version><!-- which version of Jenkins is this plugin built 
 			against? -->
 	</parent>
 
     <inceptionYear>2012</inceptionYear>
 
+	<groupId>org.biouno</groupId>
     <artifactId>structure</artifactId>
     <name>Structure Plug-in</name>
     <version>0.1-SNAPSHOT</version>
@@ -57,20 +58,18 @@
         <url>http://github.com/kinow/structure-plugin</url>
     </scm>
 
-	<!-- get every artifact through maven.glassfish.org, which proxies all the 
-		artifacts that we need -->
-	<repositories>
-		<repository>
-			<id>m.g.o-public</id>
-			<url>http://maven.glassfish.org/content/groups/public/</url>
-		</repository>
-	</repositories>
+  <!-- get every artifact through repo.jenkins-ci.org, which proxies all the artifacts that we need -->
+  <repositories>
+    <repository>
+      <id>repo.jenkins-ci.org</id>
+      <url>http://repo.jenkins-ci.org/public/</url>
+    </repository>
+  </repositories>
 
-	<pluginRepositories>
-		<pluginRepository>
-			<id>m.g.o-public</id>
-			<url>http://maven.glassfish.org/content/groups/public/</url>
-		</pluginRepository>
-	</pluginRepositories>
-	<groupId>org.biouno</groupId>
+  <pluginRepositories>
+    <pluginRepository>
+      <id>repo.jenkins-ci.org</id>
+      <url>http://repo.jenkins-ci.org/public/</url>
+    </pluginRepository>
+  </pluginRepositories>
 </project>
