@@ -106,7 +106,6 @@ public class StructureBuilderDescriptor extends Descriptor<Builder> {
 	@Override
 	public Builder newInstance(StaplerRequest arg0, JSONObject arg1)
 			throws hudson.model.Descriptor.FormException {
-		// TODO Auto-generated method stub
 		return super.newInstance(arg0, arg1);
 	}
 	/**
