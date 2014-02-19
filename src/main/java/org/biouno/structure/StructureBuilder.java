@@ -270,6 +270,10 @@ public class StructureBuilder extends Builder {
 		}
 		
 		final String outputFile = envVars.expand(outFile);
+		FilePath outFileFilePath = new FilePath(workspace, outputFile+STRUCTURE_OUTPUT_FILE_SUFFIX);
+		if (!outFileFilePath.getParent().exists()) {
+			outFileFilePath.getParent().mkdirs();
+		}
 		
 		// Create structure command line
 		final ArgumentListBuilder args = this.createStructureArgs(structureInstallation, k, mainParamsFile, extraParamsFile, outputFile, workspace); 
@@ -286,7 +290,6 @@ public class StructureBuilder extends Builder {
 			return Boolean.FALSE;
 		} else {
 			// If the command was executed with success, send the outfile back to the master
-			FilePath outFileFilePath = new FilePath(workspace, outputFile+STRUCTURE_OUTPUT_FILE_SUFFIX);
 			if(outFileFilePath.exists()) {
 				build.addAction(new StructureBuildSummaryAction(build, new String[]{outFileFilePath.getName()}, k));
 			} else {
