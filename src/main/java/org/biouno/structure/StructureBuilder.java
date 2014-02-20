@@ -38,7 +38,6 @@ import hudson.util.ArgumentListBuilder;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
 
 import org.apache.commons.lang.StringUtils;
 import org.biouno.structure.parser.MainParamsParser;
@@ -55,7 +54,7 @@ public class StructureBuilder extends Builder {
 	/*
 	 * Le logger.
 	 */
-	private static final Logger LOGGER = Logger.getLogger("org.biouno.structure");
+	//private static final Logger LOGGER = Logger.getLogger("org.biouno.structure");
 	/*
 	 * Structure command line option constants.
 	 */
@@ -70,7 +69,6 @@ public class StructureBuilder extends Builder {
 	 * Structure constants used for the output file name.
 	 */
 	public static final String STRUCTURE_RUN = "_run_";
-	public static final String STRUCTURE_RUN_OUTPUT_DIRECTORY = "structure_run_output";
 	public static final String STRUCTURE_OUTPUT_FILE_SUFFIX = "_f";
 	/*
 	 * Constants used for creating structure files.

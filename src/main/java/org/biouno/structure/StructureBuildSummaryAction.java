@@ -119,14 +119,6 @@ public class StructureBuildSummaryAction implements Action {
 			response.getOutputStream().println(fileContents);
 		}
 	}
-	/**
-	 * Gets the output folder of Structure.
-	 * 
-	 * @return the output folder
-	 */
-	public String getStructureOutputFolder() {
-		return StructureBuilder.STRUCTURE_RUN_OUTPUT_DIRECTORY;
-	}
 	/*
 	 * (non-Javadoc)
 	 * 
